@@ -9,23 +9,25 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  List,
-  ListItem,
-  ListItemText,
   Box,
   Typography,
   Divider,
+  Stack,
+  Avatar,
+  Chip,
 } from "@mui/material";
-import SkeletonLoader from '../shared/SkeletonLoader';
+import SkeletonLoader from "../shared/SkeletonLoader";
 import {
   CheckCircle as CheckCircleIcon,
   Cancel as CancelIcon,
-  BusinessCenter as BusinessIcon,
+  CalendarToday as CalendarIcon,
+  AccessTime as AccessTimeIcon,
+  Person as PersonIcon,
 } from "@mui/icons-material";
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import dayjs from 'dayjs';
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import dayjs from "dayjs";
 
 const AttendanceManagement = ({
   employees,
@@ -34,6 +36,7 @@ const AttendanceManagement = ({
   addAttendance,
   fetchAttendance,
   attendanceLoading = false,
+  isSubmitting = false,
 }) => {
   const [newAttendance, setNewAttendance] = useState({
     employee_id: "",
@@ -87,11 +90,22 @@ const AttendanceManagement = ({
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Grid container spacing={3}>
         <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h5" gutterBottom>
-                Mark Attendance
-              </Typography>
+          <Card sx={{ borderRadius: 5, p: 2.5 }}>
+            <CardContent sx={{ p: 0 }}>
+              <Stack direction="row" spacing={2} alignItems="center" mb={3}>
+                <Avatar sx={{ bgcolor: "#e9f1ff", color: "primary.main" }}>
+                  <CalendarIcon />
+                </Avatar>
+                <Box>
+                  <Typography variant="h5" fontWeight={700}>
+                    Mark Attendance
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Track presence with a single tap
+                  </Typography>
+                </Box>
+              </Stack>
+
               <Grid container spacing={2}>
                 <Grid item xs={12}>
                   <FormControl fullWidth variant="outlined" required>
@@ -110,37 +124,37 @@ const AttendanceManagement = ({
                     </Select>
                   </FormControl>
                 </Grid>
-                <Grid item xs={12}>
+                <Grid item xs={12} sm={6}>
                   <DatePicker
-                    label="Date"
+                    label="From"
                     value={newAttendance.date}
-                    onChange={(newValue) => {
-                      setNewAttendance({ ...newAttendance, date: newValue });
-                    }}
-                    renderInput={(params) => <TextField {...params} fullWidth required />}
-                    sx={{ width: '100%' }}
+                    onChange={(newValue) => setNewAttendance({ ...newAttendance, date: newValue })}
+                    slotProps={{ textField: { fullWidth: true } }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <DatePicker
+                    label="To"
+                    value={newAttendance.date}
+                    onChange={(newValue) => setNewAttendance({ ...newAttendance, date: newValue })}
+                    slotProps={{ textField: { fullWidth: true } }}
                   />
                 </Grid>
                 <Grid item xs={12}>
                   <FormControl fullWidth variant="outlined" required>
                     <InputLabel>Status</InputLabel>
-                    <Select
-                      name="status"
-                      value={newAttendance.status}
-                      onChange={handleStatusChange}
-                      label="Status"
-                    >
+                    <Select name="status" value={newAttendance.status} onChange={handleStatusChange} label="Status">
                       <MenuItem value="present">
-                        <Box display="flex" alignItems="center">
-                          <CheckCircleIcon color="success" sx={{ mr: 1 }} />
-                          Present
-                        </Box>
+                        <Stack direction="row" alignItems="center" spacing={1}>
+                          <CheckCircleIcon color="success" fontSize="small" />
+                          <Typography variant="body2">Present</Typography>
+                        </Stack>
                       </MenuItem>
                       <MenuItem value="absent">
-                        <Box display="flex" alignItems="center">
-                          <CancelIcon color="error" sx={{ mr: 1 }} />
-                          Absent
-                        </Box>
+                        <Stack direction="row" alignItems="center" spacing={1}>
+                          <CancelIcon color="error" fontSize="small" />
+                          <Typography variant="body2">Absent</Typography>
+                        </Stack>
                       </MenuItem>
                     </Select>
                   </FormControl>
@@ -151,97 +165,97 @@ const AttendanceManagement = ({
                     color="primary"
                     onClick={handleAddAttendance}
                     fullWidth
-                    disabled={!newAttendance.employee_id || !newAttendance.date}
+                    size="large"
+                    disabled={isSubmitting || !newAttendance.employee_id || !newAttendance.date}
                   >
-                    Mark Attendance
+                    {isSubmitting ? "Saving..." : "Mark Attendance"}
                   </Button>
                 </Grid>
               </Grid>
             </CardContent>
           </Card>
         </Grid>
+
         <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h5" gutterBottom>
-                Attendance Records
-              </Typography>
+          <Card sx={{ borderRadius: 5, p: 2.5, height: "100%" }}>
+            <CardContent sx={{ p: 0, height: "100%", display: "flex", flexDirection: "column" }}>
+              <Stack direction="row" spacing={2} alignItems="center" mb={3}>
+                <Avatar sx={{ bgcolor: "#e3f6ff", color: "primary.main" }}>
+                  <PersonIcon />
+                </Avatar>
+                <Box>
+                  <Typography variant="h5" fontWeight={700}>
+                    Attendance Records
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Stay updated with real-time status
+                  </Typography>
+                </Box>
+              </Stack>
+
               {viewingEmployee ? (
                 <>
-                  <Box mb={2}>
-                    <Typography variant="subtitle1">
-                      {selectedEmployeeData?.full_name} (
-                      {selectedEmployeeData?.employee_id})
-                    </Typography>
-                    <Typography variant="body2" color="textSecondary">
-                      {selectedEmployeeData?.department}
-                    </Typography>
-                  </Box>
+                  <Card sx={{ mb: 2, p: 2, borderRadius: 4, bgcolor: "#f6f9ff" }}>
+                    <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems={{ sm: "center" }}>
+                      <Avatar sx={{ bgcolor: "#fff", color: "primary.main" }}>
+                        {selectedEmployeeData?.full_name?.[0] || "E"}
+                      </Avatar>
+                      <Box flex={1}>
+                        <Typography fontWeight={600}>{selectedEmployeeData?.full_name}</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          ID {selectedEmployeeData?.employee_id} • {selectedEmployeeData?.department}
+                        </Typography>
+                      </Box>
+                      <Chip icon={<AccessTimeIcon />} label={`${filteredAttendance.length} records`} color="primary" variant="outlined" />
+                    </Stack>
+                  </Card>
+
                   <Divider sx={{ mb: 2 }} />
-                  {attendanceLoading ? (
-                    <SkeletonLoader type="list" count={5} />
-                  ) : filteredAttendance.length > 0 ? (
-                    <List>
-                      {filteredAttendance.map((record) => (
-                        <ListItem
+
+                  <Box sx={{ flex: 1, overflowY: "auto", pr: 1 }}>
+                    {attendanceLoading ? (
+                      <SkeletonLoader type="list" count={5} />
+                    ) : filteredAttendance.length > 0 ? (
+                      filteredAttendance.map((record) => (
+                        <Card
                           key={record.id || record._id}
                           sx={{
-                            border: "1px solid #e0e0e0",
-                            borderRadius: 1,
-                            mb: 1,
-                            bgcolor: "background.paper",
+                            mb: 2,
+                            px: 2,
+                            py: 1.5,
+                            borderRadius: 4,
+                            boxShadow: "0 12px 30px rgba(15, 40, 100, 0.06)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
                           }}
                         >
-                          <ListItemText
-                            primary={new Date(record.date).toLocaleDateString()}
-                            secondary={
-                              <Box
-                                sx={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: 1,
-                                }}
-                              >
-                                {record.status === "present" ? (
-                                  <>
-                                    <CheckCircleIcon color="success" fontSize="small" />
-                                    <Typography
-                                      variant="body2"
-                                      color="success.main"
-                                      component="span"
-                                    >
-                                      Present
-                                    </Typography>
-                                  </>
-                                ) : (
-                                  <>
-                                    <CancelIcon color="error" fontSize="small" />
-                                    <Typography
-                                      variant="body2"
-                                      color="error.main"
-                                      component="span"
-                                    >
-                                      {record.status === "absent" ? "Absent" : record.status}
-                                    </Typography>
-                                  </>
-                                )}
-                              </Box>
-                            }
-                            secondaryTypographyProps={{ component: "div" }}
+                          <Stack spacing={0.5}>
+                            <Typography fontWeight={600}>{dayjs(record.date).format("MMM D, YYYY")}</Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              {dayjs(record.date).format("dddd")}
+                            </Typography>
+                          </Stack>
+                          <Chip
+                            icon={record.status === "present" ? <CheckCircleIcon color="success" /> : <CancelIcon color="error" />}
+                            label={record.status === "present" ? "Present" : "Absent"}
+                            color={record.status === "present" ? "success" : "error"}
+                            variant={record.status === "present" ? "outlined" : "filled"}
+                            sx={{ fontWeight: 600 }}
                           />
-                        </ListItem>
-                      ))}
-                    </List>
-                  ) : (
-                    <Typography variant="body1" color="textSecondary">
-                      No attendance records found for this employee.
-                    </Typography>
-                  )}
+                        </Card>
+                      ))
+                    ) : (
+                      <Box textAlign="center" py={6} color="text.secondary">
+                        No attendance records found for this employee.
+                      </Box>
+                    )}
+                  </Box>
                 </>
               ) : (
-                <Typography variant="body1" color="textSecondary">
+                <Box textAlign="center" py={6} color="text.secondary">
                   Select an employee to view attendance records.
-                </Typography>
+                </Box>
               )}
             </CardContent>
           </Card>

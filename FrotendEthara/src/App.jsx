@@ -1,5 +1,4 @@
 import { useState, useEffect, Suspense, lazy } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Container, Box, Alert, Snackbar, Grid, Card, CardContent, Skeleton } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import api from "./services/api";
@@ -11,24 +10,28 @@ const MainNavigation = lazy(() => import("./components/MainNavigation"));
 const theme = createTheme({
   palette: {
     primary: {
-      main: "#1976d2",
-      light: "#42a5f5",
-      dark: "#1565c0",
+      main: "#1369dc",
+      light: "#4d8ff5",
+      dark: "#0b3f8a",
+      contrastText: "#ffffff",
     },
     secondary: {
-      main: "#dc004e",
-      light: "#ff5983",
-      dark: "#9a0036",
+      main: "#1ec6ff",
+      contrastText: "#0b1b3a",
     },
     background: {
-      default: "#f5f5f5",
+      default: "#e8ecf9",
       paper: "#ffffff",
+    },
+    text: {
+      primary: "#0b1b3a",
+      secondary: "#6c7f99",
     },
   },
   typography: {
     h3: {
       fontWeight: 700,
-      color: "#1976d2",
+      color: "#0b1b3a",
     },
     h5: {
       fontWeight: 600,
@@ -44,8 +47,9 @@ const theme = createTheme({
     MuiCard: {
       styleOverrides: {
         root: {
-          boxShadow: "0 4px 6px rgba(0, 0, 0, 0.07)",
-          border: "1px solid #e0e0e0",
+          boxShadow: "0 20px 45px rgba(15, 40, 100, 0.08)",
+          border: "1px solid rgba(255, 255, 255, 0.4)",
+          borderRadius: 20,
         },
       },
     },
@@ -54,6 +58,7 @@ const theme = createTheme({
         root: {
           textTransform: "none",
           fontWeight: 600,
+          borderRadius: 999,
         },
       },
     },
@@ -65,6 +70,9 @@ function App() {
   const [attendance, setAttendance] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [attendanceLoading, setAttendanceLoading] = useState(false);
+  const [employeeSubmitting, setEmployeeSubmitting] = useState(false);
+  const [attendanceSubmitting, setAttendanceSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState("employees");
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
@@ -97,6 +105,7 @@ function App() {
       showSnackbar("Please fill all fields!", "error");
       return false;
     }
+    setEmployeeSubmitting(true);
     try {
       const response = await api.post("/api/employees", employeeData);
       setEmployees((prev) => [...prev, response.data]);
@@ -105,6 +114,8 @@ function App() {
     } catch (error) {
       showSnackbar(getErrorMessage(error), "error");
       return false;
+    } finally {
+      setEmployeeSubmitting(false);
     }
   };
 
@@ -147,6 +158,7 @@ function App() {
       showSnackbar("Please select employee and date!", "error");
       return false;
     }
+    setAttendanceSubmitting(true);
     try {
       const payload = {
         employee_id: attendanceData.employee_id,
@@ -163,6 +175,8 @@ function App() {
     } catch (error) {
       showSnackbar(getErrorMessage(error), "error");
       return false;
+    } finally {
+      setAttendanceSubmitting(false);
     }
   };
 
@@ -170,59 +184,63 @@ function App() {
     loadEmployees();
   }, []);
 
+  const handleViewAttendanceFromEmployees = (employeeId) => {
+    fetchAttendance(employeeId);
+    setActiveTab("attendance");
+  };
+
   const handleCloseSnackbar = () => {
     setSnackbar({ ...snackbar, open: false });
   };
 
   return (
-    <Router>
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Suspense
-          fallback={
-            <Box sx={{ mt: 4 }}>
-              <Skeleton variant="text" width="30%" height={40} animation="wave" sx={{ mb: 2 }} />
-              <Grid container spacing={3}>
-                <Grid item xs={12} md={6}>
-                  <Card>
-                    <CardContent>
-                      <Skeleton variant="text" width="50%" animation="wave" sx={{ mb: 2 }} />
-                      <Skeleton variant="rectangular" height={200} animation="wave" />
-                    </CardContent>
-                  </Card>
+    <ThemeProvider theme={theme}>
+      <Box
+        sx={{
+          minHeight: "100vh",
+          background: "linear-gradient(180deg, #eef2ff 0%, #f7f8fc 40%, #fdfdff 100%)",
+          py: { xs: 3, md: 5 },
+        }}
+      >
+        <Container maxWidth="lg">
+          <Suspense
+            fallback={
+              <Box sx={{ mt: 4 }}>
+                <Skeleton variant="rounded" height={120} animation="wave" sx={{ mb: 3, borderRadius: 4 }} />
+                <Grid container spacing={3}>
+                  <Grid item xs={12} md={6}>
+                    <Card>
+                      <CardContent>
+                        <Skeleton variant="text" width="50%" animation="wave" sx={{ mb: 2 }} />
+                        <Skeleton variant="rectangular" height={220} animation="wave" />
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <Card>
+                      <CardContent>
+                        <Skeleton variant="text" width="50%" animation="wave" sx={{ mb: 2 }} />
+                        <Skeleton variant="rectangular" height={280} animation="wave" />
+                      </CardContent>
+                    </Card>
+                  </Grid>
                 </Grid>
-                <Grid item xs={12} md={6}>
-                  <Card>
-                    <CardContent>
-                      <Skeleton variant="text" width="50%" animation="wave" sx={{ mb: 2 }} />
-                      <Skeleton variant="rectangular" height={300} animation="wave" />
-                    </CardContent>
-                  </Card>
-                </Grid>
-              </Grid>
-            </Box>
-          }
-        >
-          <MainNavigation />
+              </Box>
+            }
+          >
+            <MainNavigation activeTab={activeTab} onTabChange={setActiveTab} totalEmployees={employees.length} />
 
-          <Routes>
-            <Route
-              path="/"
-              element={<Navigate to="/employees" replace />}
-            />
-            <Route
-              path="/employees"
-              element={
+            <Box sx={{ mt: 3 }}>
+              {activeTab === "employees" ? (
                 <EmployeeManagement
                   employees={employees}
                   addEmployee={addEmployee}
                   deleteEmployee={deleteEmployee}
                   fetchAttendance={fetchAttendance}
+                  onViewAttendance={handleViewAttendanceFromEmployees}
+                  isSubmitting={employeeSubmitting}
                 />
-              }
-            />
-            <Route
-              path="/attendance"
-              element={
+              ) : (
                 <AttendanceManagement
                   employees={employees}
                   attendance={attendance}
@@ -230,37 +248,26 @@ function App() {
                   addAttendance={addAttendance}
                   fetchAttendance={fetchAttendance}
                   attendanceLoading={attendanceLoading}
+                  isSubmitting={attendanceSubmitting}
                 />
-              }
-            />
-          </Routes>
-        </Suspense>
+              )}
+            </Box>
+          </Suspense>
 
-        <Snackbar
-          open={snackbar.open}
-          autoHideDuration={4000}
-          onClose={handleCloseSnackbar}
-          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-        >
-          <Alert
+          <Snackbar
+            open={snackbar.open}
+            autoHideDuration={4000}
             onClose={handleCloseSnackbar}
-            severity={snackbar.severity}
-            sx={{ width: "100%" }}
+            anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
           >
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
-      </Container>
-    </Router>
-  );
-}
-
-function AppWithTheme() {
-  return (
-    <ThemeProvider theme={theme}>
-      <App />
+            <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: "100%" }}>
+              {snackbar.message}
+            </Alert>
+          </Snackbar>
+        </Container>
+      </Box>
     </ThemeProvider>
   );
 }
 
-export default AppWithTheme;
+export default App;

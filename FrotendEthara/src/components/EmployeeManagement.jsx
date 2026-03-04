@@ -1,32 +1,43 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useMemo, useState } from "react";
 import {
   Grid,
   Card,
   CardContent,
   TextField,
   Button,
-  List,
-  ListItem,
-  ListItemText,
   Box,
   Typography,
   IconButton,
+  Avatar,
+  Stack,
+  InputAdornment,
+  Divider,
 } from "@mui/material";
 import {
   PersonAdd as PersonAddIcon,
   Delete as DeleteIcon,
   Visibility as VisibilityIcon,
+  Search as SearchIcon,
+  Badge as BadgeIcon,
+  Email as EmailIcon,
+  Apartment as ApartmentIcon,
 } from "@mui/icons-material";
 
-const EmployeeManagement = ({ employees, addEmployee, deleteEmployee, fetchAttendance }) => {
-  const navigate = useNavigate();
+const EmployeeManagement = ({
+  employees,
+  addEmployee,
+  deleteEmployee,
+  fetchAttendance,
+  onViewAttendance,
+  isSubmitting = false,
+}) => {
   const [newEmployee, setNewEmployee] = useState({
     employee_id: "",
     full_name: "",
     email: "",
     department: "",
   });
+  const [searchTerm, setSearchTerm] = useState("");
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -45,14 +56,33 @@ const EmployeeManagement = ({ employees, addEmployee, deleteEmployee, fetchAtten
     }
   };
 
+  const filteredEmployees = useMemo(() => {
+    if (!searchTerm) return employees;
+    return employees.filter((employee) =>
+      `${employee.full_name} ${employee.employee_id} ${employee.department}`
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase())
+    );
+  }, [employees, searchTerm]);
+
   return (
     <Grid container spacing={3}>
       <Grid item xs={12} md={6}>
-        <Card>
-          <CardContent>
-            <Typography variant="h5" gutterBottom>
-              Add New Employee
-            </Typography>
+        <Card sx={{ borderRadius: 5, p: 2.5 }}>
+          <CardContent sx={{ p: 0 }}>
+            <Stack direction="row" spacing={2} alignItems="center" mb={3}>
+              <Avatar sx={{ bgcolor: "#e9f1ff", color: "primary.main" }}>
+                <PersonAddIcon />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" fontWeight={700}>
+                  Add New Employee
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Capture employee details to grow the team
+                </Typography>
+              </Box>
+            </Stack>
             <Grid container spacing={2}>
               <Grid item xs={12}>
                 <TextField
@@ -63,6 +93,13 @@ const EmployeeManagement = ({ employees, addEmployee, deleteEmployee, fetchAtten
                   onChange={handleInputChange}
                   variant="outlined"
                   required
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <BadgeIcon color="primary" />
+                      </InputAdornment>
+                    ),
+                  }}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -86,6 +123,13 @@ const EmployeeManagement = ({ employees, addEmployee, deleteEmployee, fetchAtten
                   onChange={handleInputChange}
                   variant="outlined"
                   required
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <EmailIcon color="primary" />
+                      </InputAdornment>
+                    ),
+                  }}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -97,6 +141,13 @@ const EmployeeManagement = ({ employees, addEmployee, deleteEmployee, fetchAtten
                   onChange={handleInputChange}
                   variant="outlined"
                   required
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <ApartmentIcon color="primary" />
+                      </InputAdornment>
+                    ),
+                  }}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -106,8 +157,10 @@ const EmployeeManagement = ({ employees, addEmployee, deleteEmployee, fetchAtten
                   startIcon={<PersonAddIcon />}
                   onClick={handleAddEmployee}
                   fullWidth
+                  size="large"
+                  disabled={isSubmitting}
                 >
-                  Add Employee
+                  {isSubmitting ? "Adding..." : "Add Employee"}
                 </Button>
               </Grid>
             </Grid>
@@ -115,66 +168,84 @@ const EmployeeManagement = ({ employees, addEmployee, deleteEmployee, fetchAtten
         </Card>
       </Grid>
       <Grid item xs={12} md={6}>
-        <Card>
-          <CardContent>
-            <Typography variant="h5" gutterBottom>
-              Employee List
-            </Typography>
-            <List>
-              {employees.length === 0 ? (
-                <Typography variant="body1" color="textSecondary">
-                  No employees found. Add some employees to get started.
+        <Card sx={{ borderRadius: 5, p: 2.5, height: "100%" }}>
+          <CardContent sx={{ p: 0, height: "100%", display: "flex", flexDirection: "column" }}>
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={2} justifyContent="space-between" alignItems={{ xs: "flex-start", sm: "center" }}>
+              <Box>
+                <Typography variant="h5" fontWeight={700}>
+                  Employee List
                 </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {employees.length} teammates in the roster
+                </Typography>
+              </Box>
+              <TextField
+                placeholder="Search employee"
+                size="small"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon fontSize="small" />
+                    </InputAdornment>
+                  ),
+                  sx: { borderRadius: 999, bgcolor: "#f5f7ff" },
+                }}
+              />
+            </Stack>
+
+            <Divider sx={{ my: 2 }} />
+
+            <Box sx={{ flex: 1, overflowY: "auto", pr: 1 }}>
+              {filteredEmployees.length === 0 ? (
+                <Box textAlign="center" py={6} color="text.secondary">
+                  No employees match your search.
+                </Box>
               ) : (
-                employees.map((employee) => (
-                  <ListItem
+                filteredEmployees.map((employee) => (
+                  <Card
                     key={employee.id || employee._id || employee.employee_id}
                     sx={{
-                      border: "1px solid #e0e0e0",
-                      borderRadius: 1,
-                      mb: 1,
-                      "&:hover": { bgcolor: "action.hover" },
+                      mb: 2,
+                      px: 2,
+                      py: 1.5,
+                      borderRadius: 4,
+                      boxShadow: "0 12px 30px rgba(15, 40, 100, 0.06)",
                     }}
-                    secondaryAction={
-                      <Box>
+                  >
+                    <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
+                      <Stack direction="row" spacing={2} alignItems="center">
+                        <Avatar sx={{ bgcolor: "#eff4ff", color: "primary.main" }}>
+                          {employee.full_name?.[0] || "E"}
+                        </Avatar>
+                        <Box>
+                          <Typography fontWeight={600}>{employee.full_name}</Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            ID: {employee.employee_id} • {employee.department}
+                          </Typography>
+                        </Box>
+                      </Stack>
+                      <Stack direction="row" spacing={1}>
                         <IconButton
-                          edge="end"
                           aria-label="view"
                           onClick={() => {
                             fetchAttendance(employee.employee_id);
-                            navigate("/attendance");
+                            onViewAttendance?.(employee.employee_id);
                           }}
-                          sx={{ mr: 1 }}
+                          sx={{ bgcolor: "#e9f1ff" }}
                         >
                           <VisibilityIcon color="primary" />
                         </IconButton>
-                        <IconButton
-                          edge="end"
-                          aria-label="delete"
-                          onClick={() => deleteEmployee(employee)}
-                        >
+                        <IconButton aria-label="delete" onClick={() => deleteEmployee(employee)} sx={{ bgcolor: "#ffeaea" }}>
                           <DeleteIcon color="error" />
                         </IconButton>
-                      </Box>
-                    }
-                  >
-                    <ListItemText
-                      primary={employee.full_name}
-                      secondary={
-                        <>
-                          <Box component="span" display="block">
-                            ID: {employee.employee_id}
-                          </Box>
-                          <Box component="span" display="block">
-                            {employee.department}
-                          </Box>
-                        </>
-                      }
-                    />
-                  </ListItem>
+                      </Stack>
+                    </Stack>
+                  </Card>
                 ))
               )}
-            </List>
+            </Box>
           </CardContent>
         </Card>
       </Grid>
